@@ -1,4 +1,4 @@
-"""Build the 3D campus viewer (web/index.html) from the raw data.
+"""Build the 3D campus viewer (docs/index.html) from the raw data.
 
 The scene is expressed in a local frame centred on the campus centroid:
 E (east, m), N (north, m) in TUREF/TM33 and orthometric height H (m).
@@ -25,7 +25,7 @@ from localgeoid import load_study_data  # noqa: E402
 from localgeoid.data import lonlat_to_tm, tm_to_lonlat  # noqa: E402
 
 RAW = ROOT / "data" / "raw"
-WEB = ROOT / "web"
+WEB = ROOT / "docs"
 
 d = load_study_data()
 campus = d.campus_tm
@@ -171,7 +171,7 @@ scene = dict(
     terrain=terrain, boundary=dict(E=r(bpts[:, 0] - X0, 1), N=r(bpts[:, 1] - Y0, 1)),
     buildings=buildings, roads=roads, areas=areas, pois=pois, controlPoints=cps,
 )
-tpl = (WEB / "template.html").read_text(encoding="utf-8")
+tpl = (ROOT / "scripts" / "viewer_template.html").read_text(encoding="utf-8")
 html = tpl.replace("/*__SCENE__*/null", json.dumps(scene, ensure_ascii=False, separators=(",", ":")))
 (WEB / "index.html").write_text(html, encoding="utf-8")
 print(f"vertices {len(V)}  triangles {len(tri)}  buildings {len(buildings)}  roads {len(roads)}  "

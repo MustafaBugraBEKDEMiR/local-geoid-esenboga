@@ -17,7 +17,7 @@ Ankara Yıldırım Beyazıt University (AYBÜ) Esenboğa Campus (≈1.7 km²) an
 
 ## 3D campus model (in the browser)
 
-`web/index.html` is a self-contained Three.js viewer of the campus only:
+`docs/index.html` is a self-contained Three.js viewer of the campus only:
 - terrain from SRTM 30 m, drawn as a diorama cut to the campus boundary
 - OSM buildings, roads, pitches and parking
 - the suggested GNSS/levelling points
@@ -25,8 +25,9 @@ Ankara Yıldırım Beyazıt University (AYBÜ) Esenboğa Campus (≈1.7 km²) an
 
 Click the terrain to see *H*, *N* (both models), *h*, and the height error
 from using EGM2008 at that spot.
-Open the file locally or enable GitHub Pages
-(*Settings → Pages → Deploy from branch → `/web`*).
+Open the file locally, or view it online via GitHub Pages
+(*Settings → Pages → Deploy from a branch → `main` / `/docs`*):
+<https://mustafabugrabekdemir.github.io/local-geoid-esenboga/>
 Rebuild it with `python scripts/build_web.py`.
 
 ![3D viewer](figures/fig6_3d_viewer.png)
@@ -133,7 +134,7 @@ pip install -r requirements.txt
 python scripts/run_experiments.py --reps 200   # ~1 min
 python scripts/run_placement.py --reps 150     # ~1 min
 python scripts/make_figures.py
-python scripts/build_web.py                    # 3D viewer -> web/index.html
+python scripts/build_web.py                    # 3D viewer -> docs/index.html
 python scripts/make_demo_gif.py                # optional: figures/demo.gif (needs Playwright + ffmpeg)
 pytest -q
 ```
@@ -141,7 +142,7 @@ pytest -q
 ## Roadmap
 
 - [x] Control-point placement optimisation
-- [x] Interactive 3D campus model in the browser (`web/`)
+- [x] Interactive 3D campus model in the browser (`docs/`)
 - [ ] Field campaign on campus: static GNSS (TUSAGA-Aktif/CORS) + levelling on
       the suggested points → replace simulated points with real ones
 - [ ] Least-squares collocation and an ML baseline

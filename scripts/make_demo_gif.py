@@ -1,4 +1,4 @@
-"""Record figures/demo.gif from web/index.html with a headless browser.
+"""Record figures/demo.gif from docs/index.html with a headless browser.
 
 Needs Playwright with Chromium and ffmpeg. The page loads three.js from a CDN;
 pass --three-dir to serve it from a local `npm i three@0.169.0` instead.
@@ -34,7 +34,7 @@ async def record(three_dir: Path | None, out_dir: Path):
                 await r.continue_()
 
         await pg.route("**/*", route)
-        await pg.goto((ROOT / "web/index.html").as_uri())
+        await pg.goto((ROOT / "docs/index.html").as_uri())
         await pg.wait_for_function("window.viewer !== undefined")
         await pg.wait_for_timeout(1500)
         n = 0
