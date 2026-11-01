@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AYBÜ Esenboğa Külliyesi — 3B Jeodezik Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16181d; --ink2:#4d5260; --muted:#8a8f9c; --line:#e3e1db;
+    --panel:rgba(255,255,255,.86); --accent:#2a78d6; --accent2:#eb6834; --ok:#1baf7a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:Inter,system-ui,sans-serif;color:var(--ink);
+    background:radial-gradient(120% 90% at 50% 0%,#f7f6f2 0%,#e9e7e0 55%,#d9d6cc 100%)}
+  #c{position:fixed;inset:0;display:block;touch-action:none}
+  .card{background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,.7);box-shadow:0 10px 30px rgba(30,30,25,.12),0 1px 0 rgba(255,255,255,.6) inset;
+    border-radius:14px;z-index:3}
+  #panel{position:fixed;top:16px;left:16px;width:300px;padding:16px 16px 12px;max-height:calc(100% - 32px);overflow:auto}
+  #panel h1{font-size:15px;line-height:1.25;margin:0 0 2px;font-weight:700;letter-spacing:-.01em}
+  #panel .sub{font-size:12px;color:var(--ink2);margin-bottom:12px}
+  .sec{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+  .sec h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px;font-weight:600}
+  label.tg{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer;user-select:none}
+  label.tg input{accent-color:var(--ink)}
+  .sw{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none}
+  .row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink2);margin:6px 0 2px}
+  .row b{font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--ink);font-size:12px}
+  input[type=range]{width:100%;accent-color:var(--ink)}
+  .seg{display:flex;background:#efede7;border-radius:9px;padding:3px;gap:3px;margin-top:6px}
+  .seg button{flex:1;border:0;background:transparent;font:500 12px Inter;padding:6px 4px;border-radius:7px;color:var(--ink2);cursor:pointer}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .btns{display:flex;gap:6px;margin-top:4px}
+  .btns button{flex:1;border:1px solid var(--line);background:#fff;font:500 12px Inter;padding:7px 4px;border-radius:9px;cursor:pointer;color:var(--ink)}
+  .btns button:hover{border-color:#c9c6bd}
+  .btns button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  #info{position:fixed;right:16px;bottom:110px;width:300px;padding:14px 16px;font-size:12.5px;display:none}
+  #info h3{margin:0 0 8px;font-size:13px}
+  #info table{width:100%;border-collapse:collapse}
+  #info td{padding:3px 0;color:var(--ink2);vertical-align:top}
+  #info td.v{text-align:right;font-family:'JetBrains Mono',monospace;color:var(--ink);font-size:12px;white-space:nowrap}
+  #info .note{margin-top:8px;padding:8px 10px;border-radius:9px;background:#fdf0ea;color:#7a3215;font-size:12px;line-height:1.4}
+  #info .x{position:absolute;top:8px;right:10px;border:0;background:none;font-size:18px;color:var(--muted);cursor:pointer}
+  #story{position:fixed;right:16px;top:16px;width:280px;padding:14px 16px;font-size:12.5px;line-height:1.5;color:var(--ink2)}
+  #story b{color:var(--ink)}
+  #story .big{font:700 26px Inter;color:var(--ink);letter-spacing:-.02em}
+  #story .big span{font-size:13px;font-weight:500;color:var(--ink2)}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 6px}
+  .kpi{background:#f5f4ef;border-radius:10px;padding:8px 10px}
+  .kpi div:first-child{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .kpi div:last-child{font:600 15px 'JetBrains Mono',monospace;color:var(--ink)}
+  #legend{margin-top:8px;font-size:11.5px}
+  #legend .bar{height:8px;border-radius:4px;background:linear-gradient(90deg,#dfe8d2,#cdd6b4,#c9b48f,#a98f6c)}
+  #legend .lbl{display:flex;justify-content:space-between;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10.5px;margin-top:2px}
+  #tip{position:fixed;pointer-events:none;background:rgba(22,24,29,.92);color:#fff;font-size:12px;padding:6px 9px;border-radius:7px;display:none;white-space:nowrap;z-index:5}
+  .lab{position:fixed;transform:translate(-50%,-100%);pointer-events:none;font:600 11px Inter;color:var(--ink);
+    background:rgba(255,255,255,.92);padding:2px 6px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.15);white-space:nowrap}
+  .lab.cp{color:#fff;background:var(--accent)} .lab.cp.d{background:var(--accent2)}
+  .lab.geo{font-weight:600;background:rgba(42,120,214,.95);color:#fff} .lab.geo.e{background:rgba(235,104,52,.95)}
+  #compass{position:fixed;right:24px;bottom:56px;width:46px;height:46px}
+  #attr{position:fixed;right:12px;bottom:8px;font-size:10.5px;color:var(--ink2);text-align:right;max-width:70%}
+  #attr a{color:inherit}
+  #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink2)}
+  @media (max-width:820px){
+    #story{display:none}
+    #panel{width:calc(100% - 24px);left:12px;top:12px;max-height:46%}
+    #info{width:calc(100% - 24px);left:12px;right:auto;bottom:28px}
+    #compass{bottom:auto;top:calc(46% + 24px)}
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="load">3B sahne yükleniyor…</div>
+
+<div id="panel" class="card">
+  <h1>AYBÜ Esenboğa Külliyesi</h1>
+  <div class="sub">3B arazi · binalar · jeoit modeli — yalnızca kampüs sınırı</div>
+
+  <div class="sec"><h2>Katmanlar</h2>
+    <label class="tg"><input type="checkbox" id="L_terrain" checked><span class="sw" style="background:#cdd6b4"></span>Arazi (SRTM 30 m)</label>
+    <label class="tg"><input type="checkbox" id="L_buildings" checked><span class="sw" style="background:#f4f2ec;border:1px solid #c9c6bd"></span>Binalar (OSM)</label>
+    <label class="tg"><input type="checkbox" id="L_roads" checked><span class="sw" style="background:#5d5c58"></span>Yollar</label>
+    <label class="tg"><input type="checkbox" id="L_areas" checked><span class="sw" style="background:#7fb069"></span>Saha · otopark · yeşil alan</label>
+    <label class="tg"><input type="checkbox" id="L_cps" checked><span class="sw" style="background:var(--accent)"></span>Önerilen GNSS/nivelman noktaları</label>
+    <label class="tg"><input type="checkbox" id="L_geoid"><span class="sw" style="background:linear-gradient(90deg,var(--accent),var(--accent2))"></span>Jeoit yüzeyleri (TG-20 / EGM2008)</label>
+  </div>
+
+  <div class="sec"><h2>Nokta yerleşimi (8 nokta)</h2>
+    <div class="seg" id="layout">
+      <button data-v="maximin" class="on">Alan dolduran</button>
+      <button data-v="d_optimal">D-optimal</button>
+    </div>
+  </div>
+
+  <div class="sec"><h2>Görünüm</h2>
+    <div class="row"><span>Düşey abartma</span><b id="exv">×1.5</b></div>
+    <input type="range" id="ex" min="1" max="4" step="0.1" value="1.5">
+    <div class="row"><span>Jeoit abartması</span><b id="gxv">×250</b></div>
+    <input type="range" id="gx" min="50" max="1000" step="10" value="250">
+    <div class="btns" style="margin-top:10px">
+      <button id="b_persp">Perspektif</button><button id="b_top">Üstten</button><button id="b_rot">Döndür</button>
+    </div>
+    <div id="legend"><div class="bar"></div><div class="lbl"><span id="hmin"></span><span>Arazi yüksekliği H (m)</span><span id="hmax"></span></div></div>
+  </div>
+</div>
+
+<div id="story" class="card">
+  <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600">Neden önemli?</div>
+  <div class="big" id="offset">−34 <span>cm</span></div>
+  <div>GNSS alıcısı <b>EGM2008</b> ile çalışırsa, kampüsteki tüm ortometrik yükseklikler resmî <b>TG-20 / TUDKA-99</b> sistemine göre bu kadar <b>düşük</b> çıkar.</div>
+  <div class="kpis">
+    <div class="kpi"><div>Alan</div><div id="k_area"></div></div>
+    <div class="kpi"><div>Jeoit eğimi</div><div id="k_tilt"></div></div>
+    <div class="kpi"><div>Sabit kaydırma + 1 nokta</div><div>≈0.7 cm</div></div>
+    <div class="kpi"><div>EGM2008 tek başına</div><div id="k_egm"></div></div>
+  </div>
+  <div style="font-size:11.5px">Araziye tıklayın: o noktadaki H, N ve elipsoidal yükseklik h gösterilir. Jeoit katmanını açarak iki modelin farkını abartılı olarak görün.</div>
+</div>
+
+<div id="info" class="card"><button class="x" id="infox" aria-label="Kapat">×</button><div id="infob"></div></div>
+<div id="tip"></div>
+<svg id="compass" viewBox="-25 -25 50 50"><circle r="23" fill="rgba(255,255,255,.88)" stroke="#d8d5cc"/><g id="cg"><path d="M0,-12 L5,3 L0,0 L-5,3 Z" fill="#e34948"/><path d="M0,12 L5,-3 L0,0 L-5,-3 Z" fill="#9a968c"/><text x="0" y="-14.5" text-anchor="middle" font-size="7.5" fill="#16181d" font-family="Inter" font-weight="700">K</text></g></svg>
+<div id="attr">Veri: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıcıları (ODbL) · SRTM (NASA/USGS) · TG-20, Yıldız vd. 2020, CC BY 4.0 · EGM2008 (NGA). Bina yükseklikleri tahminidir.</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+"three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const S = /*__SCENE__*/null;
+const T = S.terrain, BASE = T.base;
+const $ = id => document.getElementById(id);
+const fmt = (v, n=2) => v.toLocaleString('tr-TR', {minimumFractionDigits:n, maximumFractionDigits:n});
+
+// ---------------------------------------------------------------- renderer
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, preserveDrawingBuffer:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 5, 20000);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.maxPolarAngle = Math.PI * .47; controls.minDistance = 120; controls.maxDistance = 6000;
+
+scene.add(new THREE.HemisphereLight(0xf6f4ee, 0x8d8572, 1.25));
+const sun = new THREE.DirectionalLight(0xfff6e8, 2.4);
+sun.position.set(-900, 1300, -700);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+const sc = sun.shadow.camera; sc.left = -1400; sc.right = 1400; sc.top = 1400; sc.bottom = -1400; sc.near = 100; sc.far = 4000;
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 1.2;
+scene.add(sun);
+
+const model = new THREE.Group();          // everything that follows vertical exaggeration
+scene.add(model);
+const P = (E, N, H) => new THREE.Vector3(E, H - BASE, -N);
+
+// ---------------------------------------------------------------- terrain
+const nV = T.E.length;
+const pos = new Float32Array(nV * 3), col = new Float32Array(nV * 3);
+const ramp = [[0,'#dfe8d2'],[.35,'#cdd6b4'],[.7,'#c9b48f'],[1,'#a98f6c']].map(([t,c]) => [t, new THREE.Color(c)]);
+const hmin = S.stats.H_min, hmax = S.stats.H_max;
+function rampAt(t){ for (let i=1;i<ramp.length;i++){ if (t<=ramp[i][0]){ const a=ramp[i-1], b=ramp[i]; return a[1].clone().lerp(b[1], (t-a[0])/(b[0]-a[0])); } } return ramp[ramp.length-1][1].clone(); }
+for (let i=0;i<nV;i++){
+  pos[3*i]=T.E[i]; pos[3*i+1]=T.H[i]-BASE; pos[3*i+2]=-T.N[i];
+  const c = rampAt((T.H[i]-hmin)/(hmax-hmin)); col[3*i]=c.r; col[3*i+1]=c.g; col[3*i+2]=c.b;
+}
+const tg = new THREE.BufferGeometry();
+tg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+tg.setAttribute('color', new THREE.BufferAttribute(col, 3));
+// triangles arrive CCW in (E, N); with x = E, z = -N they face +y
+const idx = T.tri;
+tg.setIndex(idx); tg.computeVertexNormals();
+const terrain = new THREE.Mesh(tg, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, metalness:0}));
+terrain.receiveShadow = true; terrain.name = 'terrain';
+const terrainGroup = new THREE.Group(); terrainGroup.add(terrain); model.add(terrainGroup);
+
+// skirt + base (diorama look)
+const nb = T.nBoundary;
+const sk = [];
+for (let i=0;i<nb;i++){
+  const j=(i+1)%nb;
+  const a=[T.E[i],T.H[i]-BASE,-T.N[i]], b=[T.E[j],T.H[j]-BASE,-T.N[j]];
+  const a0=[T.E[i],0,-T.N[i]], b0=[T.E[j],0,-T.N[j]];
+  sk.push(...a,...a0,...b, ...b,...a0,...b0);
+}
+const skg = new THREE.BufferGeometry(); skg.setAttribute('position', new THREE.Float32BufferAttribute(sk,3)); skg.computeVertexNormals();
+const soil = new THREE.MeshStandardMaterial({color:0xb9a887, roughness:1, side:THREE.DoubleSide});
+const skirt = new THREE.Mesh(skg, soil); skirt.castShadow = true; terrainGroup.add(skirt);
+const shape = new THREE.Shape(S.boundary.E.map((e,i)=>new THREE.Vector2(e, S.boundary.N[i])));
+const capg = new THREE.ShapeGeometry(shape); capg.rotateX(-Math.PI/2);
+const cap = new THREE.Mesh(capg, new THREE.MeshStandardMaterial({color:0x9c8d70, side:THREE.DoubleSide}));
+terrainGroup.add(cap);
+// rim line
+const rim = []; for (let i=0;i<=nb;i++){ const k=i%nb; rim.push(T.E[k], T.H[k]-BASE+0.6, -T.N[k]); }
+const rimg = new THREE.BufferGeometry(); rimg.setAttribute('position', new THREE.Float32BufferAttribute(rim,3));
+terrainGroup.add(new THREE.Line(rimg, new THREE.LineBasicMaterial({color:0x2b2a27})));
+// floor shadow catcher
+const floor = new THREE.Mesh(new THREE.CircleGeometry(2600, 64), new THREE.ShadowMaterial({opacity:.18}));
+floor.rotation.x = -Math.PI/2; floor.position.y = -0.5; floor.receiveShadow = true; scene.add(floor);
+
+// ---------------------------------------------------------------- buildings
+const bGroup = new THREE.Group(); model.add(bGroup);
+const bMat = new THREE.MeshStandardMaterial({color:0xf4f2ec, roughness:.75, metalness:0});
+const bMatHi = new THREE.MeshStandardMaterial({color:0xffd9c4, roughness:.7});
+const edgeMat = new THREE.LineBasicMaterial({color:0x8f8b81, transparent:true, opacity:.55});
+for (const b of S.buildings){
+  const sh = new THREE.Shape(b.E.map((e,i)=>new THREE.Vector2(e, b.N[i])));
+  const g = new THREE.ExtrudeGeometry(sh, {depth:b.h, bevelEnabled:false});
+  g.rotateX(-Math.PI/2);
+  const m = new THREE.Mesh(g, bMat); m.position.y = b.z - BASE; m.castShadow = m.receiveShadow = true;
+  m.userData = {kind:'building', b};
+  const e = new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), edgeMat); e.position.copy(m.position);
+  bGroup.add(m, e);
+}
+
+// ---------------------------------------------------------------- roads & areas
+const rGroup = new THREE.Group(); model.add(rGroup);
+const roadMat = new THREE.MeshStandardMaterial({color:0x5d5c58, roughness:.9, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2});
+const roadMat2 = new THREE.MeshStandardMaterial({color:0x7a7973, roughness:.9, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2});
+for (const r of S.roads){
+  const L=r.L, R=r.R, n=L.length/3, v=[];
+  for (let i=0;i<n-1;i++){
+    const l0=[L[3*i],L[3*i+2]-BASE,-L[3*i+1]], r0=[R[3*i],R[3*i+2]-BASE,-R[3*i+1]];
+    const l1=[L[3*i+3],L[3*i+5]-BASE,-L[3*i+4]], r1=[R[3*i+3],R[3*i+5]-BASE,-R[3*i+4]];
+    v.push(...l0,...r0,...l1, ...l1,...r0,...r1);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v,3)); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, r.cls==='service' ? roadMat2 : roadMat); m.receiveShadow = true;
+  m.material.side = THREE.DoubleSide; rGroup.add(m);
+}
+const aGroup = new THREE.Group(); model.add(aGroup);
+const aCol = {pitch:0x6fa85a, parking:0xb4b1a8, grass:0xa9c98b};
+for (const a of S.areas){
+  const v=[]; for (let i=0;i<a.tris.length;i+=3) v.push(a.tris[i], a.tris[i+2]-BASE, -a.tris[i+1]);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v,3)); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color:aCol[a.kind], roughness:1, side:THREE.DoubleSide,
+    polygonOffset:true, polygonOffsetFactor:-1, polygonOffsetUnits:-1}));
+  m.receiveShadow = true; aGroup.add(m);
+}
+
+// ---------------------------------------------------------------- control points
+const cpGroup = new THREE.Group(); model.add(cpGroup);
+let layout = 'maximin';
+const labels = [];
+function label(text, cls){ const el=document.createElement('div'); el.className='lab '+(cls||''); el.textContent=text; document.body.appendChild(el); return el; }
+function clearLabels(tag){ for (let i=labels.length-1;i>=0;i--) if (labels[i].tag===tag){ labels[i].el.remove(); labels.splice(i,1); } }
+function buildCPs(){
+  cpGroup.clear(); clearLabels('cp');
+  const color = layout==='maximin' ? 0x2a78d6 : 0xeb6834;
+  const mat = new THREE.MeshStandardMaterial({color, roughness:.4, emissive:color, emissiveIntensity:.15});
+  for (const p of S.controlPoints[layout]){
+    const y = p.H - BASE;
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,26,10), mat); stem.position.set(p.E, y+13, -p.N);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(6,24,16), mat); head.position.set(p.E, y+30, -p.N);
+    const ringm = new THREE.Mesh(new THREE.RingGeometry(5,8,32), new THREE.MeshBasicMaterial({color, side:THREE.DoubleSide}));
+    ringm.rotation.x=-Math.PI/2; ringm.position.set(p.E, y+0.8, -p.N);
+    for (const o of [stem, head]) { o.castShadow = true; o.userData = {kind:'cp', p}; }
+    cpGroup.add(stem, head, ringm);
+    labels.push({tag:'cp', obj:head, off:12, el:label(p.id, 'cp'+(layout==='d_optimal'?' d':''))});
+  }
+  applyVisibility();
+}
+
+// ---------------------------------------------------------------- geoid sheets (not exaggerated vertically with terrain)
+const geoGroup = new THREE.Group(); scene.add(geoGroup); geoGroup.visible = false;
+function sheet(arr, color){
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nV*3),3));
+  g.setIndex(idx);
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color, transparent:true, opacity:.42, side:THREE.DoubleSide, roughness:.5, depthWrite:false}));
+  m.userData.N = arr; geoGroup.add(m);
+  const wire = new THREE.LineSegments(new THREE.WireframeGeometry(g), new THREE.LineBasicMaterial({color, transparent:true, opacity:.18}));
+  geoGroup.add(wire); m.userData.wire = wire;
+  return m;
+}
+const sTG = sheet(T.Ntg, 0x2a78d6), sEG = sheet(T.Neg, 0xeb6834);
+const Nref = S.stats.Ntg_mean;
+let ex = 1.5, gx = 250;
+function updateGeoid(){
+  const top = (S.stats.H_max - BASE) * ex + 160;
+  for (const m of [sTG, sEG]){
+    const a = m.geometry.attributes.position.array, N = m.userData.N;
+    for (let i=0;i<nV;i++){ a[3*i]=T.E[i]; a[3*i+1]=top + (N[i]-Nref)*gx; a[3*i+2]=-T.N[i]; }
+    m.geometry.attributes.position.needsUpdate = true; m.geometry.computeVertexNormals(); m.geometry.computeBoundingSphere();
+    m.userData.wire.geometry.dispose(); m.userData.wire.geometry = new THREE.WireframeGeometry(m.geometry);
+  }
+  geoAnchors[0].position.set(T.E[0], top + (T.Ntg[0]-Nref)*gx, -T.N[0]);
+  geoAnchors[1].position.set(T.E[0], top + (T.Neg[0]-Nref)*gx, -T.N[0]);
+}
+const geoAnchors = [new THREE.Object3D(), new THREE.Object3D()]; geoGroup.add(...geoAnchors);
+labels.push({tag:'geo', obj:geoAnchors[0], off:0, el:label('TG-20 (resmî)', 'geo'), group:geoGroup});
+labels.push({tag:'geo', obj:geoAnchors[1], off:0, el:label('EGM2008', 'geo e'), group:geoGroup});
+
+// ---------------------------------------------------------------- POIs
+for (const p of S.pois){
+  const o = new THREE.Object3D(); o.position.set(p.E, p.H-BASE+4, -p.N); model.add(o);
+  labels.push({tag:'poi', obj:o, off:0, el:label('Ⓜ ' + p.name)});
+}
+
+// ---------------------------------------------------------------- layout / UI
+function applyVisibility(){
+  terrainGroup.visible = $('L_terrain').checked;
+  bGroup.visible = $('L_buildings').checked;
+  rGroup.visible = $('L_roads').checked;
+  aGroup.visible = $('L_areas').checked;
+  cpGroup.visible = $('L_cps').checked;
+  geoGroup.visible = $('L_geoid').checked;
+}
+for (const id of ['L_terrain','L_buildings','L_roads','L_areas','L_cps','L_geoid']) $(id).addEventListener('change', applyVisibility);
+document.querySelectorAll('#layout button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#layout button').forEach(x=>x.classList.toggle('on', x===b)); layout = b.dataset.v; buildCPs();
+}));
+$('ex').addEventListener('input', e => { ex = +e.target.value; $('exv').textContent = '×'+ex.toFixed(1); model.scale.y = ex; updateGeoid(); });
+$('gx').addEventListener('input', e => { gx = +e.target.value; $('gxv').textContent = '×'+gx; updateGeoid(); });
+let rotating = false;
+$('b_rot').addEventListener('click', e => { rotating = !rotating; controls.autoRotate = rotating; controls.autoRotateSpeed = .6; e.target.classList.toggle('on', rotating); });
+function fly(to, target, ms=900){
+  const p0 = camera.position.clone(), t0 = controls.target.clone(), st = performance.now();
+  function step(){ const k = Math.min(1,(performance.now()-st)/ms), e = k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    camera.position.lerpVectors(p0,to,e); controls.target.lerpVectors(t0,target,e); if (k<1) requestAnimationFrame(step); }
+  step();
+}
+const home = () => fly(new THREE.Vector3(1250, 1550, 2050), new THREE.Vector3(0, 0, 0));
+$('b_persp').addEventListener('click', home);
+$('b_top').addEventListener('click', () => fly(new THREE.Vector3(0.1, 3300, 1), new THREE.Vector3(0, 0, 0)));
+
+// stats in story card
+$('hmin').textContent = Math.round(hmin); $('hmax').textContent = Math.round(hmax);
+$('k_area').textContent = fmt(S.stats.area_km2,2)+' km²';
+$('k_tilt').textContent = Math.round((S.stats.Ntg_max - S.stats.Ntg_min)*100)+' cm';
+const off = (S.stats.Ntg_mean - S.stats.Neg_mean)*100;
+$('offset').innerHTML = (off<0?'−':'+') + Math.abs(off).toFixed(0) + ' <span>cm</span>';
+$('k_egm').textContent = Math.abs(off).toFixed(0) + ' cm';
+
+// ---------------------------------------------------------------- picking
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+const tip = $('tip');
+let hovered = null;
+function pick(ev, objs){
+  const r = canvas.getBoundingClientRect();
+  mouse.set(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(mouse, camera);
+  return ray.intersectObjects(objs, false).filter(h => h.object.visible && h.object.parent.visible);
+}
+canvas.addEventListener('pointermove', ev => {
+  const hits = pick(ev, [...bGroup.children.filter(o=>o.isMesh), ...cpGroup.children]);
+  const h = hits[0];
+  if (hovered && (!h || h.object !== hovered)) { if (hovered.userData.kind==='building') hovered.material = bMat; hovered = null; }
+  if (h && h.object.userData.kind){
+    hovered = h.object;
+    if (hovered.userData.kind==='building') hovered.material = bMatHi;
+    const u = hovered.userData;
+    tip.textContent = u.kind==='building' ? (u.b.name || u.b.type) + ' · ~' + Math.round(u.b.h) + ' m' : u.p.id + ' · kontrol noktası';
+    tip.style.display='block'; tip.style.left=(ev.clientX+14)+'px'; tip.style.top=(ev.clientY+10)+'px';
+    canvas.style.cursor='pointer';
+  } else { tip.style.display='none'; canvas.style.cursor=''; }
+});
+let downAt = null;
+canvas.addEventListener('pointerdown', ev => { downAt = [ev.clientX, ev.clientY]; });
+canvas.addEventListener('pointerup', ev => {
+  if (!downAt || Math.hypot(ev.clientX-downAt[0], ev.clientY-downAt[1]) > 5) return;
+  const hits = pick(ev, [...cpGroup.children, ...bGroup.children.filter(o=>o.isMesh), terrain]);
+  if (!hits.length) return;
+  const h = hits[0], u = h.object.userData;
+  if (u.kind==='cp') return showPoint(u.p.E, u.p.N, u.p.H, u.p.Ntg, u.p.Neg, 'Kontrol noktası ' + u.p.id);
+  if (u.kind==='building'){
+    const b = u.b;
+    return showHTML(`<h3>${b.name || b.type}</h3><table>
+      <tr><td>Tür</td><td class="v">${b.type}</td></tr>
+      <tr><td>Taban alanı</td><td class="v">${b.area.toLocaleString('tr-TR')} m²</td></tr>
+      <tr><td>Yükseklik (tahmini)</td><td class="v">~${Math.round(b.h)} m</td></tr>
+      <tr><td>Taban kotu (SRTM)</td><td class="v">${fmt(b.z+0.5,1)} m</td></tr>
+      <tr><td>OSM</td><td class="v">${b.id}</td></tr></table>
+      <div class="note" style="background:#f2f1ec;color:#4d5260">OSM'de kat bilgisi yok; yükseklik bina türüne göre varsayıldı.</div>`);
+  }
+  // terrain: barycentric interpolation of N on the clicked face
+  const loc = terrain.worldToLocal(h.point.clone());
+  const f = h.face, tri = new THREE.Triangle(
+    new THREE.Vector3().fromBufferAttribute(tg.attributes.position, f.a),
+    new THREE.Vector3().fromBufferAttribute(tg.attributes.position, f.b),
+    new THREE.Vector3().fromBufferAttribute(tg.attributes.position, f.c));
+  const bc = new THREE.Vector3(); tri.getBarycoord(loc, bc);
+  const I = (arr) => arr[f.a]*bc.x + arr[f.b]*bc.y + arr[f.c]*bc.z;
+  showPoint(loc.x, -loc.z, loc.y + BASE, I(T.Ntg), I(T.Neg), 'Seçilen nokta');
+});
+function showPoint(E, N, H, ntg, neg, title){
+  const lon = S.lonlat.lon[0] + S.lonlat.lon[1]*E + S.lonlat.lon[2]*N;
+  const lat = S.lonlat.lat[0] + S.lonlat.lat[1]*E + S.lonlat.lat[2]*N;
+  const h = H + ntg, Hegm = h - neg, d = (Hegm - H)*100;
+  showHTML(`<h3>${title}</h3><table>
+    <tr><td>Enlem / Boylam</td><td class="v">${lat.toFixed(5)}°, ${lon.toFixed(5)}°</td></tr>
+    <tr><td>TM33 Sağa / Yukarı</td><td class="v">${fmt(S.origin.E+E,1)} / ${fmt(S.origin.N+N,1)}</td></tr>
+    <tr><td>Ortometrik yükseklik H</td><td class="v">${fmt(H,2)} m</td></tr>
+    <tr><td>Jeoit N — TG-20</td><td class="v">${fmt(ntg,3)} m</td></tr>
+    <tr><td>Jeoit N — EGM2008</td><td class="v">${fmt(neg,3)} m</td></tr>
+    <tr><td>Elipsoidal h = H + N</td><td class="v">${fmt(h,2)} m</td></tr>
+    </table>
+    <div class="note">Bu noktada GNSS + EGM2008 ile hesaplanan H = <b>${fmt(Hegm,2)} m</b>, yani resmî yükseklikten <b>${d<0?'−':'+'}${Math.abs(d).toFixed(1)} cm</b> farklı.</div>`);
+}
+function showHTML(html){ $('infob').innerHTML = html; $('info').style.display='block'; }
+$('infox').addEventListener('click', () => $('info').style.display='none');
+
+// ---------------------------------------------------------------- loop
+function resize(){ const w=innerWidth, h=innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h;
+  // keep the model centred in the free space between the side cards on wide screens
+  if (w > 820) camera.setViewOffset(w, h, -Math.round(w*0.02), Math.round(h*0.04), w, h); else camera.clearViewOffset();
+  camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+camera.position.set(2200, 1700, 2600); controls.target.set(0,20,-40);
+model.scale.y = ex; buildCPs(); updateGeoid(); applyVisibility(); home();
+$('load').remove();
+const v = new THREE.Vector3();
+function frame(){
+  controls.update();
+  renderer.render(scene, camera);
+  for (const l of labels){
+    const vis = (l.group ? l.group.visible : true) && (l.tag!=='cp' || cpGroup.visible);
+    if (!vis){ l.el.style.display='none'; continue; }
+    l.obj.getWorldPosition(v); v.y += (l.off||0) * (l.obj.parent===geoGroup?1:ex);
+    v.project(camera);
+    if (v.z>1){ l.el.style.display='none'; continue; }
+    l.el.style.display='block';
+    l.el.style.left = ((v.x+1)/2*innerWidth)+'px'; l.el.style.top = ((1-v.y)/2*innerHeight)+'px';
+  }
+  const az = Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z);
+  $('cg').setAttribute('transform', `rotate(${THREE.MathUtils.radToDeg(az)})`);
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>
