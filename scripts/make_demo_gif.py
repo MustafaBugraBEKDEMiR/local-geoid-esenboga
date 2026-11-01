@@ -48,10 +48,14 @@ async def record(three_dir: Path | None, out_dir: Path):
                 controls.update(); }""", [az_deg, el_deg, dist, ty])
 
         async def shot(k=1):
+            """Render once; repeat the frame k times (holds cost one screenshot)."""
             nonlocal n
             await pg.wait_for_timeout(60)
-            for _ in range(k):
-                await pg.screenshot(path=str(out_dir / f"f{n:04d}.png"))
+            first = out_dir / f"f{n:04d}.png"
+            await pg.screenshot(path=str(first))
+            n += 1
+            for _ in range(k - 1):
+                shutil.copyfile(first, out_dir / f"f{n:04d}.png")
                 n += 1
 
         ease = lambda t: 0.5 - 0.5 * math.cos(math.pi * t)
@@ -77,7 +81,17 @@ async def record(three_dir: Path | None, out_dir: Path):
         await shot(16)
         # 4) switch the control-point layout
         await pg.click("#layout button[data-v=d_optimal]")
-        await shot(14)
+        await shot(12)
+        await pg.click("#infox")
+        # 5) SDSS scenario: rule A, then rule B
+        await pg.click("#tcol button[data-v=A]")
+        for i in range(18):
+            t = ease(i / 17)
+            await cam(20 - 20 * t, 42 + 16 * t, 2000 + 1150 * t)
+            await shot()
+        await shot(12)
+        await pg.click("#tcol button[data-v=B]")
+        await shot(18)
         await b.close()
 
 
