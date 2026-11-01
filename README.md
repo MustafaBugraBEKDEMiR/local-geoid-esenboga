@@ -71,14 +71,73 @@ Rebuild it with `python scripts/build_web.py`.
 ![Road](figures/fig4_road_profile_error.png)
 ![Placement](figures/fig5_placement.png)
 
-## Why this matters for civil engineering
+## Why this matters for decision support (MIS · SDSS · GeoBI)
 
-GNSS gives ellipsoidal height *h*. Drainage, road grades, foundations and
-flood design need orthometric height *H* = *h* − *N*, which is the height
-that tells water which way to flow. Türkiye's Large-Scale Map Production
-Regulation (BÖHHBÜY) allows *N* to come from a local GNSS/levelling geoid
-model. This project quantifies the choice of method and control-point count
-for a real construction site (an expanding university campus).
+A spatial decision support system (SDSS) or a GeoBI dashboard is only as
+good as the heights it is fed. A wrong vertical datum is a dangerous error
+for three reasons:
+
+- **It is silent.** In this case study the error is a smooth, almost constant
+  offset of about 34 cm. Nothing looks wrong on a map or in a dashboard.
+- **It is systematic.** The offset does not average out the way random noise
+  does.
+- **It is hard to see in the metadata.** A column called `elevation` rarely
+  says which geoid it refers to.
+
+The literature shows how this distorts decisions:
+
+- **Risk and site selection.** A review of 385 coastal hazard studies found
+  that about 90 % took sea level from a global geoid model instead of
+  measured sea level, which shifts who and what is counted as exposed
+  (Seeger & Minderhoud, *Nature*, 2026). NOAA estimates that a 50 cm
+  vertical datum error can mispredict inundation over thousands of acres.
+- **Uncertainty-aware decision support.** A rigorous approach to data
+  quality has several steps:
+  1. estimate data quality when the data are collected;
+  2. record it as metadata;
+  3. propagate the uncertainty through processing models;
+  4. use it in decision support tools;
+  5. communicate it to the user with the final product.
+
+  (Laskey et al., 2010)
+
+  This repository follows that chain for one variable, the height reference.
+  It measures the error, attaches an accuracy statement to each method
+  (median and 90th percentile), and shows the consequence at the point of
+  use in the 3D viewer.
+- **Drone logistics and low-altitude operations.** Vertical references are
+  fragmented:
+  - manned aviation uses barometric altitude
+  - maps use mean sea level
+  - obstacle avoidance uses height above ground
+
+  This fragmentation creates ambiguity for autonomous systems, so a single
+  ellipsoid-based reference has been proposed (Yan et al., 2026). Mainstream
+  tools add to the mix: ArcGIS uses EGM96, and some drone firmware has
+  switched from EGM96 heights to ellipsoidal heights. A delivery or
+  inspection drone can fly to the wrong height if these references are
+  mixed up.
+
+**Take-aways for an information system.** Store the vertical CRS with
+every height. For example, use the compound reference TUREF/TM33 + TUDKA-99,
+and convert GNSS heights with TG-20. Put the geoid model in the data lineage,
+and validate incoming heights against it. The campus 3D model in `docs/` is a
+small digital-twin example: it puts the decision-relevant number (the height
+error at a clicked location) in front of the user instead of hiding it in a
+processing step.
+
+Possible MIS-oriented extensions:
+- a "vertical-datum check" service for a spatial data warehouse;
+- an SDSS scenario on campus (e.g. ponding or low-point analysis for siting
+  a facility) run once with EGM2008 and once with TG-20, to compare the
+  decisions.
+
+<sub>References: Seeger, K. & Minderhoud, P. S. J. (2026), *Nature*;
+NOAA GRAV-D, via Hydro International; Laskey, K. B., Wright, E. J. &
+da Costa, P. C. G. (2010), *Envisioning uncertainty in geospatial
+information*, IJAR; Yan, S. et al. (2026), *The Vertical Challenge of
+Low-Altitude Economy*, arXiv:2603.04866; Esri Drone2Map documentation,
+"Vertical reference".</sub>
 
 ## Data (all open)
 
@@ -185,6 +244,13 @@ Resmî TG-20 jeoit modeli referans alındı. GNSS/nivelman noktaları benzetimle
 - Noktaların planlı yerleştirilmesi (maximin / D-optimal), özellikle kötü
   sonuçlanan ölçüm senaryolarını (90. yüzdelik) yaklaşık yarıya indiriyor.
 
-İnşaat mühendisliği açısından bu, kanalizasyon, yağmur suyu ve yol kotlarının
-belediye altyapısına doğru bağlanması için jeoit modeli seçiminin önemini
-sayısal olarak ortaya koyuyor.
+**Yönetim Bilişim Sistemleri açısından** çalışma bir veri kalitesi ve karar
+kalitesi örneği. Yanlış düşey datum, harita ya da panoda fark edilmeyen
+sistematik bir hata (burada ~34 cm) üretiyor. Bu hata mekânsal karar destek
+sistemlerinde (SDSS), GeoBI panolarında, taşkın ve yer seçimi analizlerinde
+ve drone lojistiğinde kararı doğrudan etkiliyor. Öneriler:
+- yükseklik verisini düşey referans sistemiyle birlikte saklamak
+  (ör. TUREF/TM33 + TUDKA-99);
+- jeoit modelini veri soy kütüğüne (lineage) yazmak;
+- hatayı kullanıcıya karar anında göstermek. Kampüs 3B modeli bunun küçük
+  bir dijital ikiz örneği.
