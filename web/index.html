@@ -421,6 +421,8 @@ addEventListener('resize', resize); resize();
 camera.position.set(2200, 1700, 2600); controls.target.set(0,20,-40);
 model.scale.y = ex; buildCPs(); updateGeoid(); applyVisibility(); home();
 $('load').remove();
+// small hook for scripted demos / screenshots (scripts/make_demo_gif.py)
+window.viewer = { camera, controls, THREE };
 const v = new THREE.Vector3();
 function frame(){
   controls.update();

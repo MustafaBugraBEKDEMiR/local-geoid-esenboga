@@ -8,6 +8,8 @@ This repository answers those questions with **open data only**, on the
 Ankara Yıldırım Beyazıt University (AYBÜ) Esenboğa Campus (≈1.7 km²) and on a
 15 × 14 km region around it.
 
+![Demo: 3D campus viewer](figures/demo.gif)
+
 > Status: **v0.1, a simulation study.** The control points are simulated from
 > the official Turkish geoid model. No field measurements yet (see *Roadmap*).
 
@@ -132,6 +134,7 @@ python scripts/run_experiments.py --reps 200   # ~1 min
 python scripts/run_placement.py --reps 150     # ~1 min
 python scripts/make_figures.py
 python scripts/build_web.py                    # 3D viewer -> web/index.html
+python scripts/make_demo_gif.py                # optional: figures/demo.gif (needs Playwright + ffmpeg)
 pytest -q
 ```
 
