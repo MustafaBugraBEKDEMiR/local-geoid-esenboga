@@ -73,3 +73,18 @@ def test_placement_designs_are_spread_and_inside():
         assert all(d.campus_tm.contains(Point(*p)) for p in pts)
         dist = np.hypot(*(pts[:, None, :] - pts[None]).transpose(2, 0, 1))
         assert dist[np.triu_indices(8, 1)].min() > 150   # well spread on a ~2 km campus
+
+
+def test_sdss_scenario_directions():
+    """EGM2008 lowers heights: rule A can only lose sites, rule B can only gain them."""
+    import json
+    from pathlib import Path
+
+    from localgeoid.sdss import evaluate, summary
+
+    root = Path(__file__).resolve().parents[1]
+    osm = json.loads((root / "data/raw/osm_campus_features.json").read_text(encoding="utf-8"))["elements"]
+    s = summary(evaluate(load_study_data(), osm))
+    assert s["A"]["wrongly_ok"] == 0 and s["A"]["lost"] > 0
+    assert s["B"]["lost"] == 0 and s["B"]["wrongly_ok"] > 0
+    assert 90 < s["eligible_ha"] < 130

@@ -201,3 +201,55 @@ if pp.exists():
                  fontweight="bold")
     fig.savefig(FIG / "fig5_placement.png")
     plt.close(fig)
+
+# ---------------------------------------------------------------- Fig 7 SDSS scenario
+from matplotlib.colors import ListedColormap  # noqa: E402
+
+from localgeoid.sdss import evaluate  # noqa: E402
+
+res = evaluate(d, osm)
+sw = pd.read_csv(ROOT / "data/processed/sdss_sweep.csv")
+cmap = ListedColormap(["#ffffff", "#e4e3df", "#b9b6ae", SERIES["aqua"], SERIES["orange"], SERIES["red"]])
+fig, axs = plt.subplots(1, 3, figsize=(16, 4.8), gridspec_kw=dict(width_ratios=[1, 1, 0.9]))
+for ax, k, title, bad, badlbl in [
+        (axs[0], "A", "Rule A — gravity sewer connection", "lost", "valid, but rejected with EGM2008"),
+        (axs[1], "B", "Rule B — absolute height limit", "wrongly_ok", "invalid, but accepted with EGM2008")]:
+    r = res[k]
+    code = np.zeros(res["X"].shape, int)
+    code[res["inside"]] = 1                       # excluded by site constraints
+    code[res["site_ok"]] = 2                      # fails the rule in both runs
+    code[r["ref"] & r["egm"]] = 3                 # suitable in both
+    code[r[bad]] = 4 if bad == "lost" else 5
+    ext = [res["X"].min(), res["X"].max(), res["Y"].min(), res["Y"].max()]
+    ax.imshow(code, origin="lower", extent=ext, cmap=cmap, vmin=0, vmax=5, interpolation="nearest")
+    draw_campus(ax, lw=1.2)
+    if k == "A":
+        mx, my = res["manhole"][:2]
+        ax.plot(mx, my, "v", color=INK, ms=9)
+        ax.annotate("manhole", (mx, my), (mx - 520, my - 120), fontsize=9, color=INK,
+                    arrowprops=dict(arrowstyle="-", color=INK, lw=.8))
+    ax.set_aspect("equal")
+    km(ax, dec=1, ylabel=(k == "A"))
+    ax.set_title(title)
+    n_bad = r[bad].sum() * res["scenario"].cell ** 2 / 1e4
+    from matplotlib.patches import Patch  # noqa: E402
+    ax.legend(handles=[Patch(color="#e4e3df", label="excluded (slope, near buildings, far from road…)"),
+                       Patch(color="#b9b6ae", label="fails rule (both geoids)"),
+                       Patch(color=SERIES["aqua"], label="suitable (both geoids)"),
+                       Patch(color=SERIES["orange"] if bad == "lost" else SERIES["red"],
+                             label=f"{badlbl}: {n_bad:.2f} ha")],
+              frameon=False, fontsize=8.5, loc="upper left", bbox_to_anchor=(0.0, -0.16), ncol=1)
+ax = axs[2]
+ax.plot(sw.threshold_shift_m, sw.flip_pct_rule_A, color=SERIES["orange"], lw=2, label="Rule A (sewer)")
+ax.plot(sw.threshold_shift_m, sw.flip_pct_rule_B, color=SERIES["red"], lw=2, label="Rule B (height limit)")
+ax.axvline(0, color=MUTED, ls="--", lw=1)
+ax.text(0.3, 0.05, "scenario\nvalue", color=INK2, fontsize=9, transform=ax.get_xaxis_transform())
+ax.set_xlabel("Shift of the rule threshold (m)")
+ax.set_ylabel("Eligible area whose decision flips (%)")
+ax.set_title("Sensitivity to the threshold")
+ax.grid(axis="y", color=GRID, lw=0.6)
+ax.legend(frameon=False, fontsize=9, loc="upper left")
+fig.suptitle("Same campus, same data, only the geoid differs: TG-20 vs EGM2008 (hypothetical thresholds)",
+             color=INK, fontweight="bold")
+fig.savefig(FIG / "fig7_sdss_scenario.png")
+plt.close(fig)

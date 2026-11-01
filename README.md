@@ -43,14 +43,15 @@ Rebuild it with `python scripts/build_web.py`.
 
 *RMSE against TG-20 on independent check points; median of 200 Monte-Carlo runs.*
 
-1. **Using the global model blindly is the main danger.** Many GNSS receivers
-   and GIS packages use EGM2008 by default. Here that puts every height
-   ≈ 33–34 cm too low relative to the national height datum (TUDKA-99/TG-20).
+1. **Using the global model blindly is the main danger.** If EGM2008 is used
+   instead of TG-20, for example because no national geoid is configured in
+   the GNSS or GIS software, every height here comes out ≈ 33–34 cm too low
+   relative to the national height datum (TUDKA-99, realised by TG-20).
    This matters for tying into municipal sewer and stormwater inverts, flood
    levels and zoning height references.
 2. **On campus scale the error is almost a pure offset.** Along the 1.7 km
-   main road the error changes by only 6 mm (slope error ≤ 0.01 ‰). Typical
-   minimum sewer gradients are around 3–5 ‰, so relative heights from GNSS are
+   main road the error changes by only 6 mm (slope error ≤ 0.01 ‰). That is far
+   below any practical design gradient, so *relative* heights from GNSS are
    safe. A *single* benchmark tie (EGM2008 + constant shift) already gives
    sub-centimetre accuracy.
 3. **More parameters are not better.** The 6-parameter quadratic surface,
@@ -60,11 +61,12 @@ Rebuild it with `python scripts/build_web.py`.
    is no longer enough (4.5 cm). Plane, kriging and thin-plate splines reach
    2–3 cm with 8–12 well-spread points.
 
-5. **Where you put the points matters more than how many.** A planned layout
+5. **Where you put the points matters as much as how many.** A planned layout
    (space-filling or D-optimal) mostly protects against *bad* surveys. With 6
    points on campus, the 90th-percentile error of the plane model drops from
-   3.3 to 1.6 cm. With 6 points in the region, the kriging error drops from
-   7.8 to about 4 cm. Medians improve less. The suggested layouts are saved in
+   3.3 cm (random) to 1.6–1.9 cm, about what 12 random points achieve.
+   With 6 points in the region, the kriging error drops from 7.8 to about
+   4 cm. Medians improve less. The suggested layouts are saved in
    `data/processed/recommended_layouts.csv`.
 
 ![Methods](figures/fig3_method_comparison.png)
@@ -87,10 +89,11 @@ for three reasons:
 The literature shows how this distorts decisions:
 
 - **Risk and site selection.** A review of 385 coastal hazard studies found
-  that about 90 % took sea level from a global geoid model instead of
-  measured sea level, which shifts who and what is counted as exposed
-  (Seeger & Minderhoud, *Nature*, 2026). NOAA estimates that a 50 cm
-  vertical datum error can mispredict inundation over thousands of acres.
+  that more than 90 % took sea level from global geoid models instead of
+  measured sea level. As a result, exposure to sea-level rise was
+  underestimated (Seeger & Minderhoud, *Nature*, 2026). In the US, NOAA's
+  GRAV-D programme notes that a 50 cm vertical datum error can lead to
+  thousands of acres of wrongly predicted inundation.
 - **Uncertainty-aware decision support.** A rigorous approach to data
   quality has several steps:
   1. estimate data quality when the data are collected;
@@ -112,11 +115,12 @@ The literature shows how this distorts decisions:
   - obstacle avoidance uses height above ground
 
   This fragmentation creates ambiguity for autonomous systems, so a single
-  ellipsoid-based reference has been proposed (Yan et al., 2026). Mainstream
-  tools add to the mix: ArcGIS uses EGM96, and some drone firmware has
-  switched from EGM96 heights to ellipsoidal heights. A delivery or
-  inspection drone can fly to the wrong height if these references are
-  mixed up.
+  ellipsoid-based reference has been proposed (Yan et al., 2026). Software
+  adds to the mix. GNSS receivers natively output ellipsoidal heights, while
+  Esri's Drone2Map documentation notes that ArcGIS Online and ArcGIS Pro use
+  the EGM96 geoid for published 3D meshes. A delivery or inspection workflow
+  that mixes these references without conversion gets heights that are off
+  by tens of metres (h vs H) or by decimetres (EGM vs national geoid).
 
 **Take-aways for an information system.** Store the vertical CRS with
 every height. For example, use the compound reference TUREF/TM33 + TUDKA-99,
@@ -126,18 +130,55 @@ small digital-twin example: it puts the decision-relevant number (the height
 error at a clicked location) in front of the user instead of hiding it in a
 processing step.
 
-Possible MIS-oriented extensions:
-- a "vertical-datum check" service for a spatial data warehouse;
-- an SDSS scenario on campus (e.g. ponding or low-point analysis for siting
-  a facility) run once with EGM2008 and once with TG-20, to compare the
-  decisions.
+### SDSS scenario on campus: does the geoid change the decision?
 
-<sub>References: Seeger, K. & Minderhoud, P. S. J. (2026), *Nature*;
-NOAA GRAV-D, via Hydro International; Laskey, K. B., Wright, E. J. &
-da Costa, P. C. G. (2010), *Envisioning uncertainty in geospatial
-information*, IJAR; Yan, S. et al. (2026), *The Vertical Challenge of
-Low-Altitude Economy*, arXiv:2603.04866; Esri Drone2Map documentation,
-"Vertical reference".</sub>
+`scripts/run_sdss.py` screens every 10 m cell of the campus for a new
+building twice with identical inputs. The only difference between the runs
+is the geoid used to turn GNSS heights into orthometric heights: TG-20
+(reference) or EGM2008.
+
+- **Site constraints (same in both runs):** slope ≤ 8 %, ≥ 15 m from
+  existing buildings, not on pitches or parking, ≤ 200 m from a road.
+  This leaves 108 ha of the 168 ha campus.
+- **Rule A, gravity sewer:** the building must drain by gravity to a manhole
+  at the south-east roundabout, with invert 2.5 m below ground, 1.5 m pipe
+  cover and 0.5 % fall. Lower heights make this rule fail. With EGM2008,
+  **1.22 ha of valid sites are rejected**: lost options.
+- **Rule B, absolute height limit:** a 20 m building must stay below
+  975 m, the kind of limit an obstacle-limitation surface imposes. Lower
+  heights make this rule pass. With EGM2008, **0.45 ha of sites that break
+  the limit are approved**: an unsafe decision.
+
+All thresholds are **hypothetical**. They are not real municipal or aviation
+values; they only place the decision boundary across the campus. Shifting
+either threshold by ±15 m changes the flipped share of the 108 ha between
+0 and ~4 %.
+
+The share is small, but the errors are not random: they fall exactly on
+the borderline sites, and their direction depends on the rule. The same
+34 cm bias makes one rule too cautious and the other unsafe. The 3D viewer
+shows both rules as a terrain colouring (*Arazi rengi → A / B*).
+
+![SDSS scenario](figures/fig7_sdss_scenario.png)
+
+Another MIS-oriented extension would be a "vertical-datum check" service
+for a spatial data warehouse.
+
+<sub>References:
+Seeger, K. & Minderhoud, P. S. J. (2026). Sea level much higher than assumed
+in most coastal hazard assessments. *Nature*. doi:10.1038/s41586-026-10196-1.
+·
+NOAA GRAV-D programme, as reported in "Airborne Gravity Survey for Floodwater
+Inundation Prediction", *Hydro International*.
+·
+Laskey, K. B., Wright, E. J. & da Costa, P. C. G. (2010). Envisioning
+uncertainty in geospatial information. *International Journal of Approximate
+Reasoning* 51, 209–223. doi:10.1016/j.ijar.2009.05.011.
+·
+Yan, S. et al. (2026). The Vertical Challenge of Low-Altitude Economy: Why We
+Need a Unified Height System? arXiv:2603.04866.
+·
+Esri, ArcGIS Drone2Map 2.3 help, "Vertical reference".</sub>
 
 ## Data (all open)
 
@@ -174,8 +215,10 @@ Coordinates are in TUREF/TM33 (EPSG:5255).
 
 ## Limitations
 
-- TG-20 is treated as the truth. Its own accuracy is ≈1–6 cm, and the 5′ grid
-  smooths out wavelengths shorter than about 10 km. Real-world errors will
+- TG-20 is treated as the truth. Its validation against GNSS/levelling gave
+  standard deviations of 1.2–6.3 cm (Yıldız et al., 2021). The public 5′ grid
+  (≈ 9 km node spacing) cannot represent geoid features smaller than about
+  10–20 km. Real-world errors will
   therefore be somewhat larger than the simulated ones.
 - The 34 cm EGM2008 − TG-20 difference includes datum and tide-system
   differences (WGS84 tide-free vs GRS80/ITRF96 zero-tide, TUDKA-99 datum),
@@ -192,6 +235,7 @@ Coordinates are in TUREF/TM33 (EPSG:5255).
 pip install -r requirements.txt
 python scripts/run_experiments.py --reps 200   # ~1 min
 python scripts/run_placement.py --reps 150     # ~1 min
+python scripts/run_sdss.py                     # SDSS scenario (seconds)
 python scripts/make_figures.py
 python scripts/build_web.py                    # 3D viewer -> docs/index.html
 python scripts/make_demo_gif.py                # optional: figures/demo.gif (needs Playwright + ffmpeg)
@@ -202,6 +246,7 @@ pytest -q
 
 - [x] Control-point placement optimisation
 - [x] Interactive 3D campus model in the browser (`docs/`)
+- [x] SDSS scenario: the same siting rules run with TG-20 and with EGM2008
 - [ ] Field campaign on campus: static GNSS (TUSAGA-Aktif/CORS) + levelling on
       the suggested points → replace simulated points with real ones
 - [ ] Least-squares collocation and an ML baseline
@@ -248,9 +293,19 @@ Resmî TG-20 jeoit modeli referans alındı. GNSS/nivelman noktaları benzetimle
 kalitesi örneği. Yanlış düşey datum, harita ya da panoda fark edilmeyen
 sistematik bir hata (burada ~34 cm) üretiyor. Bu hata mekânsal karar destek
 sistemlerinde (SDSS), GeoBI panolarında, taşkın ve yer seçimi analizlerinde
-ve drone lojistiğinde kararı doğrudan etkiliyor. Öneriler:
+ve drone lojistiğinde kararı etkileyebiliyor. Öneriler:
 - yükseklik verisini düşey referans sistemiyle birlikte saklamak
   (ör. TUREF/TM33 + TUDKA-99);
 - jeoit modelini veri soy kütüğüne (lineage) yazmak;
 - hatayı kullanıcıya karar anında göstermek. Kampüs 3B modeli bunun küçük
   bir dijital ikiz örneği.
+
+**SDSS senaryosu:** Kampüste yeni bina yeri iki kez taranıyor. Girdiler
+aynı, yalnızca jeoit modeli farklı: bir kez TG-20, bir kez EGM2008. Eşikler
+varsayımsal.
+- *Kanal bağlantısı (cazibeli)* kuralında EGM2008 ile 1,22 ha uygun alan
+  yanlışlıkla eleniyor; yani fırsat kaybı oluşuyor.
+- *Mutlak kot sınırı* kuralında ise 0,45 ha sınırı aşan alan yanlışlıkla
+  onaylanıyor; yani güvensiz karar çıkıyor.
+
+Aynı 34 cm'lik hata, kurala göre ters yönde karar hatası üretiyor.

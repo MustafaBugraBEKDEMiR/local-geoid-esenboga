@@ -1,0 +1,32 @@
+{
+  "eligible_ha": 107.99000000000001,
+  "A": {
+    "ref": 100.45,
+    "egm": 99.23,
+    "lost": 1.22,
+    "wrongly_ok": 0.0
+  },
+  "B": {
+    "ref": 88.34,
+    "egm": 88.79,
+    "lost": 0.0,
+    "wrongly_ok": 0.45
+  },
+  "scenario": {
+    "cell": 10.0,
+    "max_slope": 0.08,
+    "building_buffer": 15.0,
+    "max_road_dist": 200.0,
+    "manhole_lonlat": [
+      32.95653,
+      40.1257
+    ],
+    "invert_depth": 2.5,
+    "cover": 1.5,
+    "fall": 0.005,
+    "building_height": 20.0,
+    "height_cap": 975.0
+  },
+  "manhole_H_m": 938.97,
+  "manhole_invert_m": 936.47
+}

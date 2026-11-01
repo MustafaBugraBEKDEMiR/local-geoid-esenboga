@@ -96,6 +96,15 @@
     </div>
   </div>
 
+  <div class="sec"><h2>Arazi rengi / SDSS senaryosu</h2>
+    <div class="seg" id="tcol">
+      <button data-v="H" class="on">Yükseklik</button>
+      <button data-v="A">A: Kanal</button>
+      <button data-v="B">B: Kot sınırı</button>
+    </div>
+    <div id="sdssnote" style="display:none;font-size:11.5px;color:var(--ink2);margin-top:8px;line-height:1.45"></div>
+  </div>
+
   <div class="sec"><h2>Görünüm</h2>
     <div class="row"><span>Düşey abartma</span><b id="exv">×1.5</b></div>
     <input type="range" id="ex" min="1" max="4" step="0.1" value="1.5">
@@ -185,6 +194,32 @@ tg.setIndex(idx); tg.computeVertexNormals();
 const terrain = new THREE.Mesh(tg, new THREE.MeshStandardMaterial({vertexColors:true, roughness:.95, metalness:0}));
 terrain.receiveShadow = true; terrain.name = 'terrain';
 const terrainGroup = new THREE.Group(); terrainGroup.add(terrain); model.add(terrainGroup);
+
+// SDSS colouring (hypothetical scenario, see README)
+const heightCol = col.slice();
+const sdssCol = [new THREE.Color('#e9e7e0'), new THREE.Color('#b9b6ae'), new THREE.Color('#1baf7a')];
+const flipCol = {A:new THREE.Color('#eb6834'), B:new THREE.Color('#e34948')};
+function setTerrainColours(mode){
+  const c = tg.attributes.color.array;
+  if (mode==='H') c.set(heightCol);
+  else { const cls = S.sdss[mode];
+    for (let i=0;i<nV;i++){ const k = cls[i]===3 ? flipCol[mode] : sdssCol[cls[i]]; c[3*i]=k.r; c[3*i+1]=k.g; c[3*i+2]=k.b; } }
+  tg.attributes.color.needsUpdate = true;
+  const n = $('sdssnote'), lg = $('legend');
+  if (mode==='H'){ n.style.display='none'; lg.style.display='block'; return; }
+  lg.style.display='none'; n.style.display='block';
+  const sw = (c,t)=>`<div style="display:flex;gap:6px;align-items:center"><span class="sw" style="background:${c}"></span>${t}</div>`;
+  n.innerHTML = (mode==='A'
+    ? 'Yeni bina yeri: yerçekimli kanal bağlantısı mümkün mü? (varsayımsal eşikler)'
+    : 'Yeni bina yeri: bina tepesi mutlak kot sınırının altında mı? (varsayımsal eşikler)')
+    + sw('#e9e7e0','Kapsam dışı (eğim, bina, yola uzaklık…)') + sw('#b9b6ae','Kuralı sağlamıyor (iki jeoitte de)')
+    + sw('#1baf7a','Uygun (iki jeoitte de)')
+    + (mode==='A' ? sw('#eb6834',`Uygun ama EGM2008 ile reddediliyor: <b>${S.sdss.lostA_ha} ha</b>`)
+                  : sw('#e34948',`Uygun değil ama EGM2008 ile onaylanıyor: <b>${S.sdss.wrongB_ha} ha</b>`));
+}
+document.querySelectorAll('#tcol button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#tcol button').forEach(x=>x.classList.toggle('on', x===b)); setTerrainColours(b.dataset.v);
+}));
 
 // skirt + base (diorama look)
 const nb = T.nBoundary;
@@ -402,12 +437,12 @@ function showPoint(E, N, H, ntg, neg, title){
   showHTML(`<h3>${title}</h3><table>
     <tr><td>Enlem / Boylam</td><td class="v">${lat.toFixed(5)}°, ${lon.toFixed(5)}°</td></tr>
     <tr><td>TM33 Sağa / Yukarı</td><td class="v">${fmt(S.origin.E+E,1)} / ${fmt(S.origin.N+N,1)}</td></tr>
-    <tr><td>Ortometrik yükseklik H</td><td class="v">${fmt(H,2)} m</td></tr>
+    <tr><td>Arazi yüksekliği H (SRTM, yaklaşık)</td><td class="v">${fmt(H,2)} m</td></tr>
     <tr><td>Jeoit N — TG-20</td><td class="v">${fmt(ntg,3)} m</td></tr>
     <tr><td>Jeoit N — EGM2008</td><td class="v">${fmt(neg,3)} m</td></tr>
     <tr><td>Elipsoidal h = H + N</td><td class="v">${fmt(h,2)} m</td></tr>
     </table>
-    <div class="note">Bu noktada GNSS + EGM2008 ile hesaplanan H = <b>${fmt(Hegm,2)} m</b>, yani resmî yükseklikten <b>${d<0?'−':'+'}${Math.abs(d).toFixed(1)} cm</b> farklı.</div>`);
+    <div class="note">Bu noktada GNSS + EGM2008 ile hesaplanan H = <b>${fmt(Hegm,2)} m</b>, yani TG-20 ile hesaplanan yükseklikten <b>${d<0?'−':'+'}${Math.abs(d).toFixed(1)} cm</b> farklı.</div>`);
 }
 function showHTML(html){ $('infob').innerHTML = html; $('info').style.display='block'; }
 $('infox').addEventListener('click', () => $('info').style.display='none');

@@ -139,7 +139,7 @@ for el in osm:
         kind = "pitch" if "leisure" in t else ("parking" if t.get("amenity") == "parking" else "grass")
         areas.append(dict(kind=kind, tris=pts))
     elif el["id"].startswith("n") and t.get("name"):
-        pois.append(dict(name=t["name"] + (" (planlanan metro istasyonu)" if t.get("railway") == "proposed" else ""),
+        pois.append(dict(name=t["name"] + (" (OSM'de önerilen metro istasyonu)" if t.get("railway") == "proposed" else ""),
                          E=round(x[0] - X0, 1), N=round(y[0] - Y0, 1),
                          H=round(float(H_at(x, y)[0]), 1)))
 
@@ -152,6 +152,22 @@ for st, g in lay.groupby("strategy"):
                     H=round(float(H_at(row.x, row.y)[0]), 2),
                     Ntg=round(float(d.n_true(row.x, row.y)), 3),
                     Neg=round(float(d.n_egm(row.x, row.y)), 3)) for row in g.itertuples()]
+
+# ---------------------------------------------------------------- SDSS scenario classes per vertex
+from localgeoid.sdss import evaluate, summary  # noqa: E402
+
+sd = evaluate(d, osm)
+gx0, gy0, cell = sd["X"][0, 0], sd["Y"][0, 0], sd["scenario"].cell
+ci = np.clip(np.round((V[:, 1] - gy0) / cell).astype(int), 0, sd["X"].shape[0] - 1)
+cj = np.clip(np.round((V[:, 0] - gx0) / cell).astype(int), 0, sd["X"].shape[1] - 1)
+sdss = {}
+for k, bad in (("A", "lost"), ("B", "wrongly_ok")):
+    code = np.zeros(sd["X"].shape, int)            # 0 excluded
+    code[sd["site_ok"]] = 1                        # fails rule (both)
+    code[sd[k]["ref"] & sd[k]["egm"]] = 2          # suitable (both)
+    code[sd[k][bad]] = 3                           # decision flips because of EGM2008
+    sdss[k] = code[ci, cj].tolist()
+sdss_sum = summary(sd)
 
 # ---------------------------------------------------------------- local -> lon/lat (affine fit)
 smp = np.c_[np.random.default_rng(0).uniform(minx, maxx, 400), np.random.default_rng(1).uniform(miny, maxy, 400)]
@@ -170,6 +186,8 @@ scene = dict(
                H_min=round(float(Hv.min()), 1), H_max=round(float(Hv.max()), 1)),
     terrain=terrain, boundary=dict(E=r(bpts[:, 0] - X0, 1), N=r(bpts[:, 1] - Y0, 1)),
     buildings=buildings, roads=roads, areas=areas, pois=pois, controlPoints=cps,
+    sdss=dict(A=sdss["A"], B=sdss["B"], lostA_ha=sdss_sum["A"]["lost"],
+              wrongB_ha=sdss_sum["B"]["wrongly_ok"], eligible_ha=round(sdss_sum["eligible_ha"], 1)),
 )
 tpl = (ROOT / "scripts" / "viewer_template.html").read_text(encoding="utf-8")
 html = tpl.replace("/*__SCENE__*/null", json.dumps(scene, ensure_ascii=False, separators=(",", ":")))
